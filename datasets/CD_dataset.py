@@ -110,15 +110,13 @@ class CDDataset(ImageDataset):
         img_B = np.asarray(Image.open(B_path).convert('RGB'))
         L_path = get_label_path(self.root_dir, self.img_name_list[index % self.A_size])
 
-        label = np.array(Image.open(L_path), dtype=np.uint8)
-        # if you are getting error because of dim mismatch ad [:,:,0] at the end
+        label = np.array(Image.open(L_path).convert('L'), dtype=np.uint8)
+       
+        label = label // 255
 
-        #  二分类中，前景标注为255
-        if self.label_transform == 'norm':
-            label = label // 255
-        
+        label = np.clip(label,0,1)
+        label = np.squeeze(label)
         [img, img_B], [label] = self.augm.transform([img, img_B], [label], to_tensor=self.to_tensor)
         # print(label.max())
         
         return {'name': name, 'A': img, 'B': img_B, 'L': label}
-
