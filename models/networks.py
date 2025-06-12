@@ -156,7 +156,7 @@ def define_G(args, init_type='normal', init_gain=0.02, gpu_ids=[]):
         net = ChangeFormerV5(embed_dim=args.embed_dim) #ChangeFormer with Transformer Encoder and Convolutional Decoder (Fuse)
 
     elif args.net_G == 'ChangeFormerV6':
-        net = ChangeFormerV6(embed_dim=args.embed_dim) #ChangeFormer with Transformer Encoder and Convolutional Decoder (Fuse)
+        net = ChangeFormerV6(embed_dim=args.embed_dim, output_nc=args.n_class) #ChangeFormer with Transformer Encoder and Convolutional Decoder (Fuse)
     
     elif args.net_G == "SiamUnet_diff":
         #Implementation of ``Fully convolutional siamese networks for change detection''

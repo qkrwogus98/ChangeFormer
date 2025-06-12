@@ -54,7 +54,7 @@ class CDTrainer():
         # define lr schedulers
         self.exp_lr_scheduler_G = get_scheduler(self.optimizer_G, args)
 
-        self.running_metric = ConfuseMatrixMeter(n_class=2)
+        self.running_metric = ConfuseMatrixMeter(n_class=self.n_class)
 
         # define logger file
         logger_path = os.path.join(args.checkpoint_dir, 'log.txt')
