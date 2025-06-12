@@ -120,4 +120,3 @@ class CDDataset(ImageDataset):
         # print(label.max())
         
         return {'name': name, 'A': img, 'B': img_B, 'L': label}
-
