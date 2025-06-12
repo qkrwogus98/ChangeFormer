@@ -112,9 +112,9 @@ class CDDataset(ImageDataset):
 
         label = np.array(Image.open(L_path).convert('L'), dtype=np.uint8)
        
-        label = label // 255
+        # label = label // 255
 
-        label = np.clip(label,0,1)
+        # label = np.clip(label,0,1)
         label = np.squeeze(label)
         [img, img_B], [label] = self.augm.transform([img, img_B], [label], to_tensor=self.to_tensor)
         # print(label.max())

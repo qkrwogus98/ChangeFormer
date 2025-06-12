@@ -85,8 +85,7 @@ class CDEvaluator():
 
     def _visualize_pred(self):
         pred = torch.argmax(self.G_pred, dim=1, keepdim=True)
-        pred_vis = pred * 255
-        return pred_vis
+        return pred
 
 
     def _update_metric(self):
