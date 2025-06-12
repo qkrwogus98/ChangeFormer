@@ -2,3 +2,14 @@
 *.DS_Store
 ./sha256
 ./sha256.pub
+
+cctv_image
+samples_DSIFN/
+samples_LEVIR/
+synthetic_data
+slope_monitoring
+vis
+checkpoints
+slope_dataset
+slope_data_real
+pretrained_changeformer

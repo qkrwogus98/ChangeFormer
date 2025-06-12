@@ -9,12 +9,10 @@ bzip2=1.0.8=h7b6447c_0
 ca-certificates=2021.10.8=ha878542_0
 certifi=2021.10.8=py38h578d9bd_1
 colorama=0.4.4=pyh9f0ad1d_0
-cudatoolkit=10.2.89=hfd86e86_1
 cycler=0.11.0=pyhd8ed1ab_0
 dbus=1.13.18=hb2f20db_0
 einops=0.3.2=pyhd8ed1ab_0
 expat=2.2.10=h9c3ff4c_0
-ffmpeg=4.3=hf484d3e_0
 fontconfig=2.13.1=hba837de_1005
 fonttools=4.25.0=pyhd3eb1b0_0
 freetype=2.11.0=h70c0345_0
@@ -74,8 +72,6 @@ pyqt=5.9.2=py38h05f1152_4
 python=3.8.0=h0371630_2
 python-dateutil=2.8.2=pyhd8ed1ab_0
 python_abi=3.8=2_cp38
-pytorch=1.10.1=py3.8_cuda10.2_cudnn7.6.5_0
-pytorch-mutex=1.0=cuda
 qt=5.9.7=h0c104cb_3
 readline=7.0=h7b6447c_5
 scipy=1.7.1=py38h292c36d_2
@@ -85,8 +81,6 @@ six=1.16.0=pyhd3eb1b0_0
 sqlite=3.33.0=h62c20be_0
 timm=0.4.12=pyhd8ed1ab_0
 tk=8.6.11=h1ccaba5_0
-torchaudio=0.10.1=py38_cu102
-torchvision=0.11.2=py38_cu102
 tornado=6.1=py38h497a2fe_1
 tqdm=4.62.3=pyhd8ed1ab_0
 typing_extensions=3.10.0.2=pyh06a4308_0
