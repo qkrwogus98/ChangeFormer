@@ -172,8 +172,8 @@ class CDTrainer():
 
     def _visualize_pred(self):
         pred = torch.argmax(self.G_final_pred, dim=1, keepdim=True)
-        pred_vis = pred * 255
-        return pred_vis
+        # pred_vis = pred * 255
+        return pred
 
     def _save_checkpoint(self, ckpt_name):
         torch.save({
