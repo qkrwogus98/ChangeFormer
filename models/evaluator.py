@@ -7,12 +7,23 @@ from misc.metric_tool import ConfuseMatrixMeter
 from misc.logger_tool import Logger
 from utils import de_norm
 import utils
-
+from collections import OrderedDict
 
 # Decide which device we want to run on
 # torch.cuda.current_device()
 
 # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+def _sanitize_state_dict(state_dict, model):
+    """Adjust keys for DataParallel compatibility."""
+    if not state_dict:
+        return state_dict
+    first_key = next(iter(state_dict))
+    if first_key.startswith('module.') and not isinstance(model, torch.nn.DataParallel):
+        return OrderedDict((k[7:], v) for k, v in state_dict.items())
+    if not first_key.startswith('module.') and isinstance(model, torch.nn.DataParallel):
+        return OrderedDict((f'module.{k}', v) for k, v in state_dict.items())
+    return state_dict
 
 
 class CDEvaluator():
@@ -67,7 +78,8 @@ class CDEvaluator():
             # load the entire checkpoint
             checkpoint = torch.load(os.path.join(self.checkpoint_dir, checkpoint_name), map_location=self.device)
 
-            self.net_G.load_state_dict(checkpoint['model_G_state_dict'])
+            state_dict = _sanitize_state_dict(checkpoint['model_G_state_dict'], self.net_G)
+            self.net_G.load_state_dict(state_dict, strict=False)
 
             self.net_G.to(self.device)
 

@@ -12,12 +12,24 @@ from misc.metric_tool import ConfuseMatrixMeter
 from models.losses import cross_entropy
 import models.losses as losses
 from models.losses import get_alpha, softmax_helper, FocalLoss, mIoULoss, mmIoULoss
+from collections import OrderedDict
 
 from misc.logger_tool import Logger, Timer
 
 from utils import de_norm
 
 from tqdm import tqdm
+
+def _sanitize_state_dict(state_dict, model):
+    """Adjust keys for DataParallel compatibility."""
+    if not state_dict:
+        return state_dict
+    first_key = next(iter(state_dict))
+    if first_key.startswith('module.') and not isinstance(model, torch.nn.DataParallel):
+        return OrderedDict((k[7:], v) for k, v in state_dict.items())
+    if not first_key.startswith('module.') and isinstance(model, torch.nn.DataParallel):
+        return OrderedDict((f'module.{k}', v) for k, v in state_dict.items())
+    return state_dict
 
 class CDTrainer():
 
@@ -135,7 +147,8 @@ class CDTrainer():
             checkpoint = torch.load(os.path.join(self.checkpoint_dir, ckpt_name),
                                     map_location=self.device)
             # update net_G states
-            self.net_G.load_state_dict(checkpoint['model_G_state_dict'])
+            state_dict = _sanitize_state_dict(checkpoint['model_G_state_dict'], self.net_G)
+            self.net_G.load_state_dict(state_dict, strict=False)
 
             self.optimizer_G.load_state_dict(checkpoint['optimizer_G_state_dict'])
             self.exp_lr_scheduler_G.load_state_dict(
