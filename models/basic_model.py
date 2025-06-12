@@ -4,6 +4,7 @@ import torch
 
 from misc.imutils import save_image
 from models.networks import *
+from collections import OrderedDict
 
 
 class CDEvaluator():
@@ -32,7 +33,17 @@ class CDEvaluator():
             checkpoint = torch.load(os.path.join(self.checkpoint_dir, checkpoint_name),
                                     map_location=self.device)
 
-            self.net_G.load_state_dict(checkpoint['model_G_state_dict'])
+            original_state_dict = checkpoint['model_G_state_dict']
+            
+            # 'module.' 접두사를 제거하기 위해 새로운 OrderedDict를 생성합니다.
+            new_state_dict = OrderedDict()
+            for k, v in original_state_dict.items():
+                # 키 이름이 'module.'로 시작하면 이를 제거합니다.
+                name = k[7:] if k.startswith('module.') else k
+                new_state_dict[name] = v
+            
+            # 접두사가 제거된 새로운 state_dict를 모델에 로드합니다.
+            self.net_G.load_state_dict(new_state_dict)
             self.net_G.to(self.device)
             # update some other states
             self.best_val_acc = checkpoint['best_val_acc']
