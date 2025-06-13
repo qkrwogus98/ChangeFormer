@@ -19,7 +19,7 @@ net_G=ChangeFormerV6        #ChangeFormerV6 is the finalized verion
 
 lr_policy=linear
 optimizer=adamw                 #Choices: sgd (set lr to 0.01), adam, adamw
-loss=fl                         #Choices: ce, fl (Focal Loss), miou
+loss=ce                         #Choices: ce, fl (Focal Loss), miou
 multi_scale_train=True
 multi_scale_infer=False
 shuffle_AB=False

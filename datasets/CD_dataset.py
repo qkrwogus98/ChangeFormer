@@ -110,11 +110,15 @@ class CDDataset(ImageDataset):
         img_B = np.asarray(Image.open(B_path).convert('RGB'))
         L_path = get_label_path(self.root_dir, self.img_name_list[index % self.A_size])
 
-        label = np.array(Image.open(L_path).convert('L'), dtype=np.uint8)
-       
-        # label = label // 255
-
-        # label = np.clip(label,0,1)
+        label_img = Image.open(L_path)
+        if label_img.mode != 'L':
+            label_rgb = np.asarray(label_img.convert('RGB'))
+            flat = label_rgb.reshape(-1, 3)
+            unique_colors, inverse = np.unique(flat, axis=0, return_inverse=True)
+            label = inverse.reshape(label_rgb.shape[:2]).astype(np.uint8)
+        else:
+            label = np.array(label_img, dtype=np.uint8)
+            
         label = np.squeeze(label)
         [img, img_B], [label] = self.augm.transform([img, img_B], [label], to_tensor=self.to_tensor)
         # print(label.max())
