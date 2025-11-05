@@ -16,7 +16,7 @@ from datasets.data_utils import CDDataAugmentation
    python demo_DSIFN_inference.py
 
 2. 추론 모드 (라벨 없이 A, B 폴더만 필요):
-   python demo_DSIFN_inference.py --inference --inference_dir ./interference
+   python demo_DSIFN_inference.py --inference --inference_dir ./inference
 """
 
 
@@ -47,7 +47,7 @@ class InferenceDataset(Dataset):
         # A 폴더의 이미지 파일 리스트 가져오기
         valid_extensions = ['.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff']
         self.img_list = sorted([
-            f for f in os.listdir(self.a_dir) 
+            str(f) for f in os.listdir(self.a_dir)  # str()로 명시적 변환
             if any(f.lower().endswith(ext) for ext in valid_extensions)
         ])
         
@@ -201,7 +201,12 @@ if __name__ == '__main__':
     print("변화 탐지 시작...")
     for i, batch in enumerate(data_loader):
         name = batch['name']
-        print(f'처리 중 ({i+1}/{len(data_loader)}): {name}')
+        # np.str_ 타입을 일반 Python 문자열로 변환
+        if isinstance(name, (list, tuple)):
+            name_str = str(name[0]) if len(name) > 0 else str(name)
+        else:
+            name_str = str(name)
+        print(f'처리 중 ({i+1}/{len(data_loader)}): {name_str}')
         
         # 순전파 수행
         score_map = model._forward_pass(batch)
