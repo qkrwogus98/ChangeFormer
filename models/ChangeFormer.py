@@ -8,7 +8,7 @@ from models.help_funcs import TwoLayerConv2d, save_to_mat
 import torch.nn.functional as F
 
 import timm
-from timm.models.layers import DropPath, to_2tuple, trunc_normal_
+from timm.layers import DropPath, to_2tuple, trunc_normal_
 import types
 import math
 from abc import ABCMeta, abstractmethod

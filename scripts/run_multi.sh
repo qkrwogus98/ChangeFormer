@@ -8,9 +8,9 @@ vis_root=vis
 data_name=slope_data_real
 
 
-img_size=256    
-batch_size=16  # 원래 16 
-lr=0.0001        
+img_size=512    
+batch_size=4  # 원래 16 
+lr=0.001        
 max_epochs=200 # 원래 200
 embed_dim=256
 n_class=6

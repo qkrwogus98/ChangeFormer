@@ -8,7 +8,7 @@ vis_root=vis
 data_name=slope_data_real
 
 
-img_size=256    
+img_size=512    
 batch_size=16  # 원래 16 
 lr=0.0001        
 max_epochs=200 # 원래 200
@@ -18,7 +18,7 @@ net_G=ChangeFormerV6        #ChangeFormerV6 is the finalized verion
 
 lr_policy=linear
 optimizer=adamw                 #Choices: sgd (set lr to 0.01), adam, adamw
-loss=fl                         #Choices: ce, fl (Focal Loss), miou
+loss=ce                         #Choices: ce, fl (Focal Loss), miou
 multi_scale_train=True
 multi_scale_infer=False
 shuffle_AB=False

@@ -31,7 +31,7 @@ class CDEvaluator():
         if os.path.exists(os.path.join(self.checkpoint_dir, checkpoint_name)):
             # load the entire checkpoint
             checkpoint = torch.load(os.path.join(self.checkpoint_dir, checkpoint_name),
-                                    map_location=self.device)
+                                    map_location=self.device, weights_only=False)
 
             original_state_dict = checkpoint['model_G_state_dict']
             
@@ -39,7 +39,7 @@ class CDEvaluator():
             new_state_dict = OrderedDict()
             for k, v in original_state_dict.items():
                 # 키 이름이 'module.'로 시작하면 이를 제거합니다.
-                name = k[7:] if k.startswith('module.') else k
+                name ='module.' + k
                 new_state_dict[name] = v
             
             # 접두사가 제거된 새로운 state_dict를 모델에 로드합니다.

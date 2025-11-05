@@ -13,3 +13,10 @@ checkpoints
 slope_dataset
 slope_data_real
 pretrained_changeformer
+soil
+nochange
+water
+tree
+human
+rock
+checkpoints_only_for_binary
