@@ -13,3 +13,5 @@ checkpoints
 slope_dataset
 slope_data_real
 pretrained_changeformer
+
+checkpoints_only_for_binary

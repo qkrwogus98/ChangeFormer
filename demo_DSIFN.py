@@ -21,9 +21,9 @@ def get_args():
     # args
     # ------------
     parser = ArgumentParser()
-    parser.add_argument('--project_name', default='CD_ChangeFormerV6_DSIFN_b16_lr0.00006_adamw_train_test_200_linear_ce_multi_train_True_multi_infer_False_shuffle_AB_False_embed_dim_256', type=str)
+    parser.add_argument('--project_name', default='ChangeFormer_slope', type=str)
     parser.add_argument('--gpu_ids', type=str, default='0', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
-    parser.add_argument('--checkpoint_root', default='/media/lidan/ssd2/ChangeFormer/checkpoints/', type=str)
+    parser.add_argument('--checkpoint_root', default='./checkpoints_only_for_binary/', type=str)
     parser.add_argument('--output_folder', default='samples_DSIFN/predict_ChangeFormerV6', type=str)
 
     # data

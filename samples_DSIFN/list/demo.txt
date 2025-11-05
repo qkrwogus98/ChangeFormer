@@ -8,3 +8,6 @@
 2_4.png
 1_1.png
 0_2.png
+40.png
+1124.png
+6090.png
