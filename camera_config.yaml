@@ -1,0 +1,10 @@
+# RTSP 카메라 설정 파일
+# 이 파일을 복사하여 실제 카메라 정보로 수정하세요
+
+# RTSP 스트림 URL
+# 형식: rtsp://[사용자명]:[비밀번호]@[호스트]:[포트]/[경로]
+rtsp_url: 'rtsp://admin:dpsg1606!@13db17r02401-cctv1.iptime.org:5540/onvif/profile2/media.smp'
+
+# 추가 설정 (선택사항)
+camera_name: "CCTV-1"  # 카메라 이름
+location: "정문"        # 카메라 위치
