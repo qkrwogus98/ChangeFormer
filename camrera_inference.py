@@ -15,7 +15,6 @@ import yaml
 import cv2
 import numpy as np
 import torch
-from PIL import Image
 
 # ChangeFormer 프로젝트 모듈
 import utils
@@ -90,81 +89,85 @@ def load_camera_config(config_path):
 
 def connect_rtsp_stream(rtsp_url, retry_attempts=3, retry_delay=2):
     """
-    RTSP 스트림에 연결하는 함수 (재시도 로직 포함)
-    
+    RTSP 스트림에 연결하는 함수 (재시도 로직 포함, 최적화됨)
+
     Args:
         rtsp_url (str): RTSP 스트림 URL
         retry_attempts (int): 재시도 횟수
         retry_delay (int): 재시도 간 대기 시간 (초)
-        
+
     Returns:
         cv2.VideoCapture: 비디오 캡처 객체
-        
+
     Raises:
         RuntimeError: 연결 실패 시
     """
     for attempt in range(retry_attempts):
         print(f"카메라 연결 시도 중... ({attempt + 1}/{retry_attempts})")
         cap = cv2.VideoCapture(rtsp_url)
-        
+
         if cap.isOpened():
+            # 버퍼 크기 최소화로 지연 시간 감소
+            cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             print("✓ 카메라 연결 성공!")
             return cap
-        
+
         print(f"✗ 연결 실패. {retry_delay}초 후 재시도...")
         time.sleep(retry_delay)
-    
+
     raise RuntimeError(f"카메라 연결 실패: {rtsp_url}")
 
 
-def preprocess_frame(frame, transform):
+def preprocess_frame(frame, transform, device):
     """
-    OpenCV 프레임을 모델 입력 텐서로 변환하는 함수
-    
+    OpenCV 프레임을 모델 입력 텐서로 변환하는 함수 (최적화됨)
+
     Args:
         frame (numpy.ndarray): OpenCV BGR 프레임
         transform (CDDataAugmentation): 데이터 변환 객체
-        
+        device (torch.device): 타겟 디바이스
+
     Returns:
         torch.Tensor: 전처리된 텐서 (1, C, H, W)
     """
-    # BGR을 RGB로 변환
+    # BGR을 RGB로 변환 (불필요한 PIL 변환 제거)
     img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    
-    # PIL 이미지로 변환 후 numpy 배열로
-    img_pil = Image.fromarray(img_rgb)
-    img_np = np.array(img_pil)
-    
+
     # 데이터 증강 및 텐서 변환
-    [img_tensor], _ = transform.transform([img_np], [], to_tensor=True)
-    
-    # 배치 차원 추가
-    return img_tensor.unsqueeze(0)
+    [img_tensor], _ = transform.transform([img_rgb], [], to_tensor=True)
+
+    # 배치 차원 추가 후 바로 device로 이동
+    return img_tensor.unsqueeze(0).to(device, non_blocking=True)
 
 
-def save_change_mask(mask, output_dir, timestamp, frame_count, original_size):
+def save_change_mask(mask, output_dir, frame_count, original_size):
     """
-    변화 탐지 결과를 이미지 파일로 저장하는 함수
-    
+    변화 탐지 결과를 이미지 파일로 저장하는 함수 (최적화됨)
+
     Args:
         mask (numpy.ndarray): 변화 탐지 마스크
         output_dir (str): 출력 디렉토리
-        timestamp (datetime): 현재 타임스탬프
         frame_count (int): 프레임 카운터
         original_size (tuple): 원본 프레임 크기 (width, height)
+
+    Returns:
+        tuple: (파일명, 타임스탬프)
     """
+    # 타임스탬프 생성
+    timestamp = datetime.now()
+
     # 원본 크기로 리사이즈
     mask_resized = cv2.resize(mask, original_size, interpolation=cv2.INTER_NEAREST)
-    
+
     # 파일명 생성 (날짜_시간_프레임번호.png)
     time_str = timestamp.strftime("%Y%m%d_%H%M%S")
     filename = f"{time_str}_frame{frame_count:06d}.png"
     filepath = os.path.join(output_dir, filename)
-    
+
     # 저장
     cv2.imwrite(filepath, mask_resized)
-    
-    return filename
+
+    return filename, timestamp
 
 
 def main():
@@ -195,12 +198,15 @@ def main():
     print("\n모델 로드 중...")
     model = CDEvaluator(args)
     model.load_checkpoint(args.checkpoint_name)
-    
-    # 모델을 디바이스로 이동
+
+    # 모델을 디바이스로 이동 및 평가 모드 설정
     if hasattr(model, 'net_G'):
         model.net_G.to(device)
-    
-    model.eval()
+        model.net_G.eval()
+        # 그래디언트 계산 완전히 비활성화 (추론 성능 향상)
+        for param in model.net_G.parameters():
+            param.requires_grad = False
+
     print("✓ 모델 로드 완료")
     
     # RTSP 스트림 연결
@@ -225,52 +231,55 @@ def main():
     
     # 데이터 전처리 준비
     transform = CDDataAugmentation(img_size=args.img_size)
-    
+
     # 프레임 버퍼 (deque를 사용하여 메모리 효율적으로 관리)
     buffer = deque(maxlen=frame_offset + 1)
-    
-    # 카운터 초기화
-    frame_index = 0
+
+    # 카운터 및 캐시 초기화
     saved_count = 0
-    
+    cached_tensor_t1 = None  # 이전 프레임 텐서 캐싱
+
     print(f"\n{'='*60}")
     print("변화 탐지 시작!")
     print(f"{'='*60}\n")
-    
+
     try:
         while True:
             # 프레임 읽기
             ret, frame = cap.read()
-            
+
             if not ret:
                 print("⚠ 프레임을 읽을 수 없습니다. 스트림이 종료되었거나 연결이 끊어졌습니다.")
                 break
-            
+
             # 버퍼에 프레임 추가
             buffer.append(frame)
-            frame_index += 1
-            
+
             # 버퍼가 충분히 차지 않았으면 계속 읽기
             if len(buffer) < frame_offset + 1:
                 continue
-            
+
             # 비교할 두 프레임 가져오기 (첫 번째와 마지막)
-            frame_t1 = buffer[0]
             frame_t2 = buffer[-1]
-            
-            # 프레임 전처리
-            tensor_t1 = preprocess_frame(frame_t1, transform).to(device)
-            tensor_t2 = preprocess_frame(frame_t2, transform).to(device)
-            
+
+            # 텐서 전처리 (캐싱 활용)
+            if cached_tensor_t1 is None:
+                # 첫 번째 실행 시에만 t1 전처리
+                tensor_t1 = preprocess_frame(buffer[0], transform, device)
+            else:
+                # 이전에 전처리한 t2를 t1으로 재사용
+                tensor_t1 = cached_tensor_t1
+
+            tensor_t2 = preprocess_frame(frame_t2, transform, device)
+
+            # 다음 반복을 위해 t2 캐싱
+            cached_tensor_t1 = tensor_t2
+
             # 배치 준비
-            batch = {
-                'A': tensor_t1, 
-                'B': tensor_t2, 
-                'name': [f'frame_{saved_count}']
-            }
-            
-            # 추론 수행
-            with torch.no_grad():
+            batch = {'A': tensor_t1, 'B': tensor_t2}
+
+            # 추론 수행 (inference_mode는 no_grad보다 빠름)
+            with torch.inference_mode():
                 # GPU 사용 시 자동 혼합 정밀도 활성화
                 with torch.cuda.amp.autocast(enabled=device.type == 'cuda'):
                     try:
@@ -279,22 +288,25 @@ def main():
                     except Exception as e:
                         print(f"⚠ 추론 중 오류 발생: {e}")
                         continue
-            
-            # 마스크 후처리
+
+            # 마스크 후처리 (CPU로 이동 후 numpy 변환)
             mask = pred_mask.squeeze().cpu().numpy().astype(np.uint8)
-            
+
+            # GPU 메모리 정리
+            del pred_mask
+            if device.type == 'cuda':
+                torch.cuda.empty_cache()
+
             # 결과 저장
-            timestamp = datetime.now()
-            filename = save_change_mask(
-                mask, 
-                args.output_dir, 
-                timestamp, 
+            filename, timestamp = save_change_mask(
+                mask,
+                args.output_dir,
                 saved_count,
                 (frame_width, frame_height)
             )
-            
+
             saved_count += 1
-            
+
             # 진행 상황 출력
             if saved_count % args.save_interval == 0:
                 print(f"[{timestamp.strftime('%Y-%m-%d %H:%M:%S')}] "
